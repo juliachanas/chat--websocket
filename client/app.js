@@ -6,6 +6,9 @@ const userNameInput = document.getElementById('username');
 const messageContentInput = document.getElementById('message-content');
 let userName = '';
 
+const socket = io();
+socket.on('message', ({ author, content }) => addMessage(author, content));
+
 loginForm.addEventListener('submit', (e) => login(e));
 addMessageForm.addEventListener('submit', (e) => sendMessage(e));
 
@@ -15,6 +18,7 @@ const login = (e) => {
     alert('Please type your login');
   } else {
     userName = userNameInput.value;
+    socket.emit('join', userName);
     loginForm.classList.remove('show');
     messagesSection.classList.add('show');
   }
@@ -22,10 +26,17 @@ const login = (e) => {
 
 const sendMessage = (e) => {
   e.preventDefault();
-  if (messageContentInput.value.length === 0) {
+
+  let messageContent = messageContentInput.value;
+
+  if (!messageContent.length) {
     alert('Type your message');
   } else {
-    addMessage(userName, messageContentInput.value);
+    addMessage(userName, messageContent);
+    socket.emit('message', {
+      author: userName,
+      content: messageContentInput.value,
+    });
     messageContentInput.value = '';
   }
 };
@@ -38,6 +49,9 @@ const addMessage = (author, content) => {
 
   if (author === userName) {
     message.classList.add('message--self');
+  }
+  if (author.includes('Chat-Bot')) {
+    message.classList.add('message--Bot');
   }
 
   message.innerHTML = `
